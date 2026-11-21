@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#65b74b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="description"
+      content="Caca de Vaca: un juego 3D vertical en el que una caca simpática crece comiéndose el mundo."
+    />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>Caca de Vaca</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="Mundo 3D de Caca de Vaca"></canvas>
+
+      <div id="touch-layer"></div>
+      <div id="fx-layer"></div>
+
+      <div id="joystick-base" aria-hidden="true">
+        <span class="joystick-arrows">↑</span>
+        <div id="joystick-knob"></div>
+      </div>
+
+      <header id="hud" class="hidden">
+        <div class="hud-top">
+          <button class="icon-btn hud-pause" id="btn-pause" aria-label="Pausa">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" rx="2"></rect>
+              <rect x="14" y="5" width="4" height="14" rx="2"></rect>
+            </svg>
+          </button>
+          <div class="hud-timer" id="hud-timer">
+            <span class="hud-caption">TIEMPO</span>
+            <strong id="hud-time">1:30</strong>
+          </div>
+          <div class="hud-score">
+            <span class="hud-caption">PUNTOS</span>
+            <strong id="hud-score">0</strong>
+          </div>
+          <div class="hud-combo hidden" id="hud-combo">x2</div>
+        </div>
+        <div class="hud-stage">
+          <div class="hud-stage-label">
+            <span id="hud-stage">Cagarruta</span>
+            <span id="hud-zone">Prado</span>
+          </div>
+          <div class="hud-bar">
+            <div class="hud-bar-fill" id="hud-progress"></div>
+          </div>
+        </div>
+        <div class="tutorial hidden" id="tutorial">
+          <span class="tutorial-ring"></span>
+          <span>ARRASTRA PARA MOVERTE</span>
+        </div>
+      </header>
+
+      <section id="screen-menu" class="screen menu hidden">
+        <div class="screen-scroll has-ad">
+          <div class="menu-top">
+            <span class="mini-badge">3D · MÓVIL · BOING</span>
+            <div class="logo" aria-label="Caca de Vaca">
+              <span class="logo-main">CACA</span>
+              <span class="logo-sub">DE VACA</span>
+            </div>
+            <p class="tagline">Come, crece y cómete hasta la última casa.</p>
+          </div>
+          <div class="menu-bottom">
+            <div class="best-pill">
+              <span>RÉCORD</span>
+              <strong id="menu-best">0</strong>
+            </div>
+            <button class="btn btn-play" id="btn-play">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5.5v13l10-6.5-10-6.5z"></path>
+              </svg>
+              JUGAR
+            </button>
+            <div class="menu-row">
+              <button class="btn btn-small" id="btn-records">RÉCORDS</button>
+              <button class="icon-btn sound-btn" id="btn-sound" aria-label="Sonido">
+                <svg class="icon-sound-on" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+                  <path class="sound-wave" d="M16 8.2a5 5 0 010 7.6"></path>
+                  <path class="sound-wave" d="M18.5 5.7a8.5 8.5 0 010 12.6"></path>
+                </svg>
+                <svg class="icon-sound-off" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+                  <path class="sound-wave" d="M16.5 9.5l5 5"></path>
+                  <path class="sound-wave" d="M21.5 9.5l-5 5"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="control-note">Joystick libre · salto automático · 90 segundos</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="intro-ui" class="overlay-layer hidden">
+        <button class="btn-skip hidden" id="btn-skip">SALTAR INTRO</button>
+        <div class="intro-caption" id="intro-caption"></div>
+      </section>
+
+      <section id="screen-pause" class="screen modal-screen hidden">
+        <div class="card pause-card">
+          <span class="card-kicker">UN RESPIRO</span>
+          <h2>PAUSA</h2>
+          <button class="btn btn-primary" id="btn-resume">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.5v13l10-6.5-10-6.5z"></path>
+            </svg>
+            SEGUIR
+          </button>
+          <button class="btn btn-small" id="btn-pause-sound">
+            <span class="pause-sound-label">SONIDO: SÍ</span>
+          </button>
+          <button class="btn btn-ghost" id="btn-pause-menu">MENÚ</button>
+        </div>
+      </section>
+
+      <section id="screen-records" class="screen modal-screen hidden">
+        <div class="card records-card has-ad">
+          <span class="card-kicker">HALL OF FART</span>
+          <h2>RÉCORDS</h2>
+          <div id="records-list" class="records-list"></div>
+          <button class="btn btn-primary" id="btn-records-back">VOLVER</button>
+        </div>
+      </section>
+
+      <section id="screen-results" class="screen modal-screen hidden">
+        <div class="card results-card has-ad">
+          <span class="card-kicker" id="results-kicker">SE ACABÓ EL BOING</span>
+          <h2 id="results-title">¡TIEMPO!</h2>
+          <div class="new-record hidden" id="results-record">NUEVO RÉCORD</div>
+          <div class="results-score">
+            <span>PUNTOS</span>
+            <strong id="results-score">0</strong>
+          </div>
+          <div class="results-grid">
+            <div>
+              <span>FASE</span>
+              <strong id="results-stage">Cagarruta</strong>
+            </div>
+            <div>
+              <span>RÉCORD</span>
+              <strong id="results-best">0</strong>
+            </div>
+            <div>
+              <span>BONUS</span>
+              <strong id="results-bonus">0</strong>
+            </div>
+          </div>
+          <button class="btn btn-play" id="btn-retry">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.5v13l10-6.5-10-6.5z"></path>
+            </svg>
+            OTRA VEZ
+          </button>
+          <button class="btn btn-ghost" id="btn-results-menu">MENÚ</button>
+        </div>
+      </section>
+
+      <div id="phase-banner" class="phase-banner hidden" aria-live="polite">
+        <span id="phase-kicker">FASE 2</span>
+        <strong id="phase-name">CACOTA</strong>
+        <span id="phase-sub">OVEJAS Y VALLAS</span>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
+
+      <div id="orientation" class="hidden">
+        <div class="rotate-phone">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="20" y="6" width="24" height="40" rx="5"></rect>
+            <rect x="24" y="11" width="16" height="27" rx="2"></rect>
+            <path d="M12 42a20 20 0 0039 3"></path>
+            <path d="M11 35v9h9"></path>
+          </svg>
+          <strong>GIRA EL MÓVIL</strong>
+          <span>Caca de Vaca se juega en vertical.</span>
+        </div>
+      </div>
+
+      <div id="web-ad" aria-hidden="true">
+        <span>PUBLICIDAD DE PRUEBA</span>
+        <strong>AdMob banner</strong>
+      </div>
+
+      <div id="boot">
+        <div class="boot-logo">
+          <span>CACA</span>
+          <span>DE VACA</span>
+        </div>
+        <div class="boot-loader"></div>
+        <p>Preparando el prado...</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,447 @@
+import {
+  CircleGeometry,
+  DoubleSide,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Scene,
+  SphereGeometry,
+  TorusGeometry,
+  Vector2,
+  Vector3
+} from 'three';
+import { clamp, damp, easeOutBack, lerp } from '../core/math';
+import { speedForRadius } from '../config/balance';
+import {
+  blushMaterial,
+  eyeHighlightMaterial,
+  eyeWhiteMaterial,
+  mouthMaterial,
+  outlineMaterial,
+  propMaterial,
+  pupilMaterial,
+  shadowMaterial
+} from '../render/materials';
+import { cone, cylinder, ico, mergeParts, part, torus } from '../render/geometry';
+
+interface EyeRig {
+  group: Group;
+  pupil: Mesh;
+  eye: Mesh;
+}
+
+function makeArm(): Mesh {
+  const geometry = mergeParts([
+    part(cylinder(0.11, 0.14, 0.56, 7), {
+      color: 0x7a4a27,
+      pos: [0, -0.25, 0]
+    }),
+    part(ico(0.16, 1), { color: 0x8d5932, pos: [0, -0.54, 0.02] })
+  ]);
+  return new Mesh(geometry, propMaterial);
+}
+
+export class Player {
+  readonly root = new Group();
+  readonly visual = new Group();
+  readonly bodyPivot = new Group();
+  readonly facePivot = new Group();
+  readonly shadow: Mesh;
+  private readonly scene: Scene;
+  private readonly body: Mesh;
+  private readonly outline: Mesh;
+  private readonly eyes: EyeRig[] = [];
+  private readonly closedEyes: Mesh[] = [];
+  private readonly mouth: Mesh;
+  private readonly leftArm: Mesh;
+  private readonly rightArm: Mesh;
+  private readonly shadowMaterial: MeshBasicMaterial;
+  private readonly velocity = new Vector2();
+  private readonly knockback = new Vector2();
+  private readonly inputSmoothed = new Vector2();
+  private radius = 0.35;
+  private hopClock = 0;
+  private idleClock = 0;
+  private elapsed = 0;
+  private facing = 0;
+  private moving = 0;
+  private bounceCooldown = 0;
+  private blinkTimer = 3;
+  private blinkPhase = -1;
+  private eyeOpenTarget = 1;
+  private eyeOpenAmount = 1;
+  private hopSoundCooldown = 0;
+  private frozen = false;
+  onHop?: (strength: number) => void;
+
+  constructor(scene: Scene) {
+    this.scene = scene;
+    this.root.name = 'CacaPlayer';
+    this.bodyPivot.name = 'BodyPivot';
+    this.visual.add(this.bodyPivot);
+    this.root.add(this.visual);
+
+    const bodyGeometry = mergeParts([
+      part(ico(1, 2), { color: 0x875631, pos: [0, 0.62, 0], scale: [1, 0.58, 0.94] }),
+      part(ico(0.79, 2), { color: 0x996437, pos: [0.03, 1.15, 0.02], scale: [1, 0.58, 0.92] }),
+      part(ico(0.59, 2), { color: 0xa97443, pos: [-0.035, 1.6, -0.015], scale: [1, 0.62, 0.94] }),
+      part(cone(0.3, 0.55, 10), { color: 0xb37d49, pos: [0.11, 1.97, 0], rot: [0, 0, -0.23] }),
+      part(ico(0.14, 1), { color: 0xbf8a53, pos: [0.19, 2.21, 0] }),
+      part(torus(0.84, 0.032, 4, 18, Math.PI * 1.4), {
+        color: 0x744728,
+        pos: [-0.03, 0.86, 0],
+        rot: [Math.PI / 2, 0, 0.35]
+      }),
+      part(torus(0.62, 0.028, 4, 18, Math.PI * 1.3), {
+        color: 0x85522f,
+        pos: [0.02, 1.38, 0],
+        rot: [Math.PI / 2, 0, 1.2]
+      }),
+      part(ico(0.26, 1), {
+        color: 0xc18a53,
+        pos: [-0.42, 1.9, 0.25],
+        scale: [0.95, 0.4, 0.85]
+      }),
+      part(ico(0.28, 1), {
+        color: 0xa8713f,
+        pos: [-0.58, 0.58, 0.55],
+        scale: [1.2, 0.34, 0.5]
+      }),
+      part(ico(0.18, 1), {
+        color: 0xb8814b,
+        pos: [0.62, 1.42, -0.38],
+        scale: [1.2, 0.4, 0.65]
+      }),
+      part(ico(0.2, 1), {
+        color: 0x774a29,
+        pos: [-0.36, 0.94, 0.66],
+        scale: [1, 0.35, 0.7]
+      })
+    ]);
+
+    this.body = new Mesh(bodyGeometry, propMaterial);
+    this.bodyPivot.add(this.body);
+    this.outline = new Mesh(bodyGeometry, outlineMaterial);
+    this.outline.scale.setScalar(1.035);
+    this.bodyPivot.add(this.outline);
+
+    this.leftArm = makeArm();
+    this.leftArm.position.set(-0.82, 1.15, 0.12);
+    this.leftArm.rotation.z = -0.7;
+    this.bodyPivot.add(this.leftArm);
+    this.rightArm = makeArm();
+    this.rightArm.position.set(0.82, 1.15, 0.12);
+    this.rightArm.rotation.z = 0.7;
+    this.bodyPivot.add(this.rightArm);
+
+    this.facePivot.position.set(0, 1.5, 0.53);
+    this.visual.add(this.facePivot);
+
+    const eyeWhiteGeometry = new SphereGeometry(0.33, 16, 12);
+    const pupilGeometry = new SphereGeometry(0.098, 12, 10);
+    const highlightGeometry = new SphereGeometry(0.034, 8, 6);
+    for (const side of [-1, 1]) {
+      const group = new Group();
+      group.position.set(side * 0.335, 0.16, 0.09);
+      const eye = new Mesh(eyeWhiteGeometry, eyeWhiteMaterial);
+      eye.scale.set(1.03, 1.3, 0.5);
+      group.add(eye);
+      const pupil = new Mesh(pupilGeometry, pupilMaterial);
+      pupil.position.set(side * -0.012, 0.01, 0.145);
+      pupil.scale.set(1.0, 1.32, 0.5);
+      group.add(pupil);
+      const highlight = new Mesh(highlightGeometry, eyeHighlightMaterial);
+      highlight.position.set(side * 0.045, 0.065, 0.18);
+      group.add(highlight);
+      this.facePivot.add(group);
+      this.eyes.push({ group, pupil, eye });
+    }
+
+    for (const side of [-1, 1]) {
+      const brow = new Mesh(
+        mergeParts([
+          part(cylinder(0.026, 0.033, 0.2, 5), {
+            color: 0x4a2c18,
+            pos: [0, 0, 0],
+            rot: [0, 0, Math.PI / 2]
+          })
+        ]),
+        propMaterial
+      );
+      brow.position.set(side * 0.35, 0.69, 0.08);
+      brow.rotation.z = side * 0.2;
+      this.facePivot.add(brow);
+    }
+
+    this.mouth = new Mesh(new TorusGeometry(0.19, 0.04, 5, 16, Math.PI), mouthMaterial);
+    this.mouth.rotation.z = Math.PI;
+    this.mouth.position.set(0, -0.06, 0.17);
+    this.facePivot.add(this.mouth);
+
+    const blushGeometry = new CircleGeometry(0.105, 14);
+    for (const side of [-1, 1]) {
+      const blush = new Mesh(blushGeometry, blushMaterial);
+      blush.position.set(side * 0.65, -0.03, 0.14);
+      blush.scale.set(1, 0.7, 1);
+      this.facePivot.add(blush);
+    }
+
+    for (const side of [-1, 1]) {
+      const line = new Mesh(
+        new TorusGeometry(0.15, 0.026, 4, 10, Math.PI * 0.7),
+        new MeshBasicMaterial({ color: 0x4a2c18, side: DoubleSide })
+      );
+      line.rotation.z = side * -0.2 + Math.PI * 0.85;
+      line.position.set(side * 0.335, 0.16, 0.17);
+      line.visible = false;
+      this.facePivot.add(line);
+      this.closedEyes.push(line);
+    }
+
+    this.shadowMaterial = shadowMaterial.clone();
+    this.shadow = new Mesh(new CircleGeometry(1, 28), this.shadowMaterial);
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.renderOrder = 1;
+    scene.add(this.shadow);
+    this.scene.add(this.root);
+    this.setRadius(0.35);
+    this.setVisible(false);
+  }
+
+  get position(): Vector3 {
+    return this.root.position;
+  }
+
+  get currentRadius(): number {
+    return this.radius;
+  }
+
+  get isMoving(): boolean {
+    return this.moving > 0.15;
+  }
+
+  get bounceReady(): boolean {
+    return this.bounceCooldown <= 0;
+  }
+
+  setRadius(radius: number): void {
+    this.radius = radius;
+    this.root.scale.setScalar(radius * 1.15);
+    this.outline.scale.setScalar(1.035);
+    const shadowScale = radius * 1.12;
+    this.shadow.scale.set(shadowScale, shadowScale, 1);
+  }
+
+  setVisible(visible: boolean): void {
+    this.root.visible = visible;
+    this.shadow.visible = visible;
+  }
+
+  setFrozen(frozen: boolean): void {
+    this.frozen = frozen;
+  }
+
+  setEyesOpen(open: boolean): void {
+    this.eyeOpenTarget = open ? 1 : 0;
+    for (const line of this.closedEyes) {
+      line.visible = !open;
+    }
+  }
+
+  setEyeLids(value: number): void {
+    this.eyeOpenAmount = this.eyeOpenTarget = clamp(value, 0, 1);
+    for (const line of this.closedEyes) {
+      line.visible = value < 0.25;
+    }
+    const lid = Math.max(value, 0.05);
+    for (const rig of this.eyes) {
+      rig.group.scale.y = lid;
+    }
+  }
+
+  placeAt(x: number, z: number, y = 0): void {
+    this.root.position.set(x, y, z);
+    this.shadow.position.set(x, 0.018, z);
+  }
+
+  resetForRun(x: number, z: number): void {
+    this.velocity.set(0, 0);
+    this.knockback.set(0, 0);
+    this.inputSmoothed.set(0, 0);
+    this.hopClock = 0;
+    this.idleClock = 0;
+    this.blinkTimer = 2.5;
+    this.blinkPhase = -1;
+    this.eyeOpenTarget = 1;
+    this.eyeOpenAmount = 1;
+    this.bounceCooldown = 0;
+    this.facing = Math.PI;
+    this.bodyPivot.rotation.set(0, this.facing, 0);
+    this.visual.scale.setScalar(1);
+    this.visual.rotation.set(0, 0, 0);
+    this.root.rotation.set(0, 0, 0);
+    this.root.position.set(x, 0, z);
+    this.shadow.position.set(x, 0.018, z);
+    this.shadowMaterial.opacity = 0.24;
+    for (const line of this.closedEyes) {
+      line.visible = false;
+    }
+    this.facePivot.visible = true;
+    this.setVisible(true);
+  }
+
+  applyKnockback(nx: number, nz: number, strength: number): void {
+    if (!this.bounceReady) return;
+    this.knockback.set(nx * strength, nz * strength);
+    this.bounceCooldown = 0.55;
+    this.visual.scale.set(1.18, 0.78, 1.18);
+    this.moving = 0;
+  }
+
+  refreshFace(cameraPosition: Vector3): void {
+    this.facePivot.lookAt(cameraPosition);
+    const jitterY = Math.cos(this.elapsed * 2.1) * 0.01;
+    for (const rig of this.eyes) {
+      rig.pupil.position.y = 0.01 + jitterY;
+    }
+  }
+
+  setIntroSquash(x: number, y: number, z: number): void {
+    this.visual.scale.set(x, y, z);
+  }
+
+  update(dt: number, input: Vector2, cameraPosition: Vector3): void {
+    if (this.frozen) {
+      this.refreshFace(cameraPosition);
+      this.updateShadow();
+      return;
+    }
+    this.elapsed += dt;
+    this.idleClock += dt;
+    this.bounceCooldown = Math.max(0, this.bounceCooldown - dt);
+    this.hopSoundCooldown = Math.max(0, this.hopSoundCooldown - dt);
+    const magnitude = Math.min(1, input.length());
+    this.inputSmoothed.x = damp(this.inputSmoothed.x, input.x, 14, dt);
+    this.inputSmoothed.y = damp(this.inputSmoothed.y, input.y, 14, dt);
+    const speed = speedForRadius(this.radius);
+    const targetX = this.inputSmoothed.x * speed;
+    const targetZ = this.inputSmoothed.y * speed;
+    this.velocity.x = damp(this.velocity.x, targetX, magnitude > 0.05 ? 8.5 : 4.2, dt);
+    this.velocity.y = damp(this.velocity.y, targetZ, magnitude > 0.05 ? 8.5 : 4.2, dt);
+    this.knockback.multiplyScalar(Math.exp(-5.5 * dt));
+
+    this.root.position.x += (this.velocity.x + this.knockback.x) * dt;
+    this.root.position.z += (this.velocity.y + this.knockback.y) * dt;
+    this.moving = damp(this.moving, magnitude, 10, dt);
+
+    if (magnitude > 0.08) {
+      const desiredFacing = Math.atan2(this.inputSmoothed.x, this.inputSmoothed.y);
+      let delta = desiredFacing - this.facing;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      this.facing += delta * Math.min(1, dt * 10);
+    }
+    this.bodyPivot.rotation.y = this.facing;
+    this.bodyPivot.rotation.z = damp(
+      this.bodyPivot.rotation.z,
+      -this.inputSmoothed.x * 0.14 * magnitude,
+      8,
+      dt
+    );
+    this.bodyPivot.rotation.x = damp(
+      this.bodyPivot.rotation.x,
+      this.inputSmoothed.y * 0.12 * magnitude,
+      8,
+      dt
+    );
+
+    const movingNow = clamp(this.moving * 1.25, 0, 1);
+    let hopHeight = 0;
+    let squashX = 1;
+    let squashY = 1;
+    let squashZ = 1;
+    if (movingNow > 0.12) {
+      const hopDuration = clamp(0.52 - this.radius * 0.012, 0.32, 0.52);
+      const previous = this.hopClock;
+      this.hopClock += dt * (0.75 + movingNow * 0.35);
+      if (this.hopClock >= hopDuration) {
+        this.hopClock %= hopDuration;
+        if (this.onHop && this.hopSoundCooldown <= 0) {
+          this.onHop(movingNow);
+          this.hopSoundCooldown = 0.13;
+        }
+      } else if (previous === 0 && this.onHop && this.hopSoundCooldown <= 0) {
+        this.onHop(movingNow);
+        this.hopSoundCooldown = 0.13;
+      }
+      const phase = this.hopClock / hopDuration;
+      const arc = Math.sin(phase * Math.PI);
+      hopHeight = arc * (0.16 + this.radius * 0.18) * movingNow;
+      if (phase < 0.16) {
+        const t = phase / 0.16;
+        squashX = lerp(1.12, 0.96, t);
+        squashZ = lerp(1.12, 0.96, t);
+        squashY = lerp(0.84, 1.09, t);
+      } else if (phase > 0.78) {
+        const t = (phase - 0.78) / 0.22;
+        squashX = lerp(0.97, 1.09, t);
+        squashZ = lerp(0.97, 1.09, t);
+        squashY = lerp(1.06, 0.88, t);
+      } else {
+        squashX = 0.96;
+        squashZ = 0.96;
+        squashY = 1.09;
+      }
+    } else {
+      this.hopClock = 0;
+      const breathe = Math.sin(this.idleClock * 2.4);
+      squashX = 1 + breathe * 0.015;
+      squashY = 1 - breathe * 0.02;
+      squashZ = 1 + breathe * 0.015;
+    }
+
+    this.visual.position.y = hopHeight;
+    this.visual.scale.x = damp(this.visual.scale.x, squashX, 20, dt);
+    this.visual.scale.y = damp(this.visual.scale.y, squashY, 20, dt);
+    this.visual.scale.z = damp(this.visual.scale.z, squashZ, 20, dt);
+
+    const armWave = Math.sin(this.elapsed * (movingNow > 0.1 ? 11 : 2.2)) * 0.25;
+    this.leftArm.rotation.z = -0.7 - armWave * (0.5 + movingNow);
+    this.rightArm.rotation.z = 0.7 + armWave * (0.5 + movingNow);
+    this.leftArm.rotation.x = Math.sin(this.elapsed * 7) * 0.08;
+    this.rightArm.rotation.x = -Math.sin(this.elapsed * 7) * 0.08;
+
+    this.updateBlink(dt);
+    this.refreshFace(cameraPosition);
+    this.updateShadow(hopHeight);
+  }
+
+  private updateBlink(dt: number): void {
+    if (this.blinkPhase >= 0) {
+      this.blinkPhase += dt;
+      if (this.blinkPhase > 0.17) {
+        this.blinkPhase = -1;
+        this.blinkTimer = 2.4 + Math.random() * 3.2;
+      }
+    } else {
+      this.blinkTimer -= dt;
+      if (this.blinkTimer <= 0 && this.eyeOpenTarget > 0.5) {
+        this.blinkPhase = 0;
+      }
+    }
+    this.eyeOpenAmount = damp(this.eyeOpenAmount, this.eyeOpenTarget, 16, dt);
+    const closing = this.blinkPhase >= 0 ? Math.abs(0.5 - Math.min(1, this.blinkPhase / 0.17)) * 2 : 1;
+    const lid = Math.max(0.055, Math.min(this.eyeOpenAmount, closing));
+    for (const rig of this.eyes) {
+      rig.group.scale.y = lid;
+    }
+  }
+
+  private updateShadow(hopHeight = 0): void {
+    const height = Math.max(0, hopHeight);
+    const scale = this.radius * (1.12 + height * 0.8);
+    this.shadow.position.set(this.root.position.x, 0.018, this.root.position.z);
+    this.shadow.scale.set(scale, scale, 1);
+    this.shadowMaterial.opacity = clamp(0.26 - height * 0.45, 0.08, 0.26);
+  }
+}
