@@ -27,3 +27,4 @@ try {
 
 document.addEventListener('gesturestart', (event) => event.preventDefault());
 document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
+window.addEventListener('contextmenu', (event) => event.preventDefault());

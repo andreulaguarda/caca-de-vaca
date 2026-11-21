@@ -222,7 +222,6 @@ export class Game {
     this.audio.startMusic();
     void ads.prepareInterstitial();
     this.updateHud();
-    this.ui.showToast('¡A COMER!');
   }
 
   private startDirect(): void {
@@ -245,7 +244,6 @@ export class Game {
     void ads.hideBanner();
     void ads.prepareInterstitial();
     this.updateHud();
-    this.ui.showToast('¡OTRA RONDA!');
   }
 
   private retry(): void {
