@@ -473,15 +473,15 @@ function windowRows(width: number, height: number, depth: number, color: number)
       const x = -width / 2 + ((col + 0.5) / cols) * width;
       const y = 1.4 + ((row + 0.3) / rows) * (height - 2.2);
       windows.push(
-        part(box(0.8, 0.85, 0.08), {
+        part(box(0.8, 0.85, 0.14), {
           color,
-          pos: [x, y, depth / 2 + 0.02]
+          pos: [x, y, depth / 2 + 0.055]
         })
       );
       windows.push(
-        part(box(0.8, 0.85, 0.08), {
+        part(box(0.8, 0.85, 0.14), {
           color,
-          pos: [x, y, -depth / 2 - 0.02]
+          pos: [x, y, -depth / 2 - 0.055]
         })
       );
     }
@@ -502,9 +502,7 @@ function createHouse(): BufferGeometry {
     part(box(1.15, 0.85, 0.1), { color: C.window, pos: [2.15, 2.55, -3.32] }),
     part(box(0.12, 0.85, 1.15), { color: C.window, pos: [4.17, 2.55, 1.3] }),
     part(box(0.12, 0.85, 1.15), { color: C.window, pos: [-4.17, 2.55, -1.2] }),
-    part(cylinder(0.38, 0.43, 1.8, 6), { color: C.brick, pos: [2.4, 5.0, -1.6] }),
-    part(box(1.05, 0.18, 6.7), { color: C.roofDark, pos: [-3.65, 4.05, 0], rot: [0, 0, 0.22] }),
-    part(box(1.05, 0.18, 6.7), { color: C.roofDark, pos: [3.65, 4.05, 0], rot: [0, 0, -0.22] })
+    part(cylinder(0.38, 0.43, 1.8, 6), { color: C.brick, pos: [2.4, 5.0, -1.6] })
   ]);
 }
 
@@ -515,7 +513,7 @@ function createBuilding(): BufferGeometry {
   return mergeParts([
     part(box(width, height, depth), { color: C.building, pos: [0, height / 2, 0] }),
     part(box(width + 0.6, 0.7, depth + 0.6), { color: 0xb6a789, pos: [0, 0.35, 0] }),
-    part(box(width + 0.4, 0.5, depth + 0.4), { color: C.roofDark, pos: [0, height - 0.25, 0] }),
+    part(box(width + 0.4, 0.5, depth + 0.4), { color: C.roofDark, pos: [0, height + 0.1, 0] }),
     part(box(4.2, 1.5, 4.2), { color: C.buildingBlue, pos: [2.8, height + 0.7, 0.5] }),
     part(box(2.8, 1.0, 2.8), { color: C.buildingWarm, pos: [-3.8, height + 0.4, -1.2] }),
     ...windowRows(width, height, depth, C.window),

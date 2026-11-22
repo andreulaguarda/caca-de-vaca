@@ -303,7 +303,7 @@ export class Player {
 
   placeAt(x: number, z: number, y = 0): void {
     this.root.position.set(x, y, z);
-    this.shadow.position.set(x, 0.018, z);
+    this.shadow.position.set(x, 0.085, z);
   }
 
   resetForRun(x: number, z: number): void {
@@ -324,7 +324,7 @@ export class Player {
     this.visual.rotation.set(0, 0, 0);
     this.root.rotation.set(0, 0, 0);
     this.root.position.set(x, 0, z);
-    this.shadow.position.set(x, 0.018, z);
+    this.shadow.position.set(x, 0.085, z);
     this.shadowMaterial.opacity = 0.24;
     this.applyEyeVisibility(1);
     this.facePivot.visible = true;
@@ -483,7 +483,7 @@ export class Player {
   private updateShadow(hopHeight = 0): void {
     const height = Math.max(0, hopHeight);
     const scale = this.radius * (1.12 + height * 0.8);
-    this.shadow.position.set(this.root.position.x, 0.018, this.root.position.z);
+    this.shadow.position.set(this.root.position.x, 0.085, this.root.position.z);
     this.shadow.scale.set(scale, scale, 1);
     this.shadowMaterial.opacity = clamp(0.26 - height * 0.45, 0.08, 0.26);
   }

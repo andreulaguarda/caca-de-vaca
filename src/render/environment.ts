@@ -97,14 +97,27 @@ function createPatches(): Group {
   const group = new Group();
   const stoneTexture = createStoneTexture();
   const dirtTexture = createDirtTexture();
-  const stoneMaterial = new MeshLambertMaterial({ map: stoneTexture, color: 0xffffff });
-  const dirtMaterial = new MeshLambertMaterial({ map: dirtTexture, color: 0xefd6a3 });
+  const stoneMaterial = new MeshLambertMaterial({
+    map: stoneTexture,
+    color: 0xffffff,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -4
+  });
+  const dirtMaterial = new MeshLambertMaterial({
+    map: dirtTexture,
+    color: 0xefd6a3,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -4
+  });
   for (let i = 0; i < 4; i += 1) {
     const angle = i * (Math.PI / 2) + 0.55;
     const patch = new Mesh(new CircleGeometry(randomRange(mulberry32(i + 50), 26, 44), 28), stoneMaterial);
     patch.rotation.x = -Math.PI / 2;
     patch.rotation.z = angle;
-    patch.position.set(Math.cos(angle) * 176, 0.006, Math.sin(angle) * 176);
+    patch.position.set(Math.cos(angle) * 244, 0.035 + i * 0.006, Math.sin(angle) * 244);
+    patch.renderOrder = 2;
     group.add(patch);
   }
   for (let i = 0; i < 5; i += 1) {
@@ -112,7 +125,8 @@ function createPatches(): Group {
     const patch = new Mesh(new CircleGeometry(7 + (i % 3) * 4, 18), dirtMaterial);
     patch.rotation.x = -Math.PI / 2;
     patch.rotation.z = angle;
-    patch.position.set(Math.cos(angle) * 55, 0.008, Math.sin(angle) * 55);
+    patch.position.set(Math.cos(angle) * (58 + i * 12), 0.045 + i * 0.006, Math.sin(angle) * (58 + i * 12));
+    patch.renderOrder = 2;
     group.add(patch);
   }
   return group;
@@ -159,7 +173,7 @@ export class Environment {
       const z = Math.sin(angle) * radius;
       const scale = randomRange(rng, 0.6, 1.7);
       matrix.makeScale(scale, scale * randomRange(rng, 0.8, 1.4), scale);
-      matrix.setPosition(x, 0, z);
+      matrix.setPosition(x, 0.015, z);
       grass.setMatrixAt(i, matrix);
       color.setHSL(randomRange(rng, 0.23, 0.32), randomRange(rng, 0.38, 0.6), randomRange(rng, 0.4, 0.56));
       grass.setColorAt(i, color);

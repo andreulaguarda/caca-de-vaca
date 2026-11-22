@@ -17,7 +17,7 @@ export class CameraRig {
   private cinematicTarget = new Vector3();
 
   constructor(aspect: number) {
-    this.camera = new PerspectiveCamera(56, aspect, 0.1, 2500);
+    this.camera = new PerspectiveCamera(56, aspect, 1, 2600);
     this.camera.position.set(0, 12, 8);
     this.snapMenu();
   }

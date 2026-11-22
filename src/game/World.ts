@@ -146,6 +146,8 @@ const ZONES: ZoneConfig[] = [
 ];
 
 const BIG_PROPS: PropId[] = ['tree', 'house', 'building'];
+const PROP_LIFT = 0.028;
+const SHADOW_LIFT = 0.085;
 
 export class World {
   private readonly scene: Scene;
@@ -317,14 +319,14 @@ export class World {
 
   private composeShadow(item: WorldItem, x: number, z: number, scale: number): void {
     this.tmpMat.makeScale(scale, scale, 1);
-    this.tmpMat.setPosition(x, 0.019, z);
+    this.tmpMat.setPosition(x, SHADOW_LIFT, z);
     this.shadows.setMatrixAt(item.shadowIndex, this.tmpMat);
     this.shadows.instanceMatrix.needsUpdate = true;
   }
 
   private writeAllMatrices(): void {
     for (const item of this.allItems) {
-      this.composeItem(item, item.x, item.z, 0, item.baseScale);
+      this.composeItem(item, item.x, item.z, PROP_LIFT, item.baseScale);
       this.composeShadow(item, item.x, item.z, item.radius * 1.04);
     }
   }
@@ -336,7 +338,7 @@ export class World {
       item.eatT = -1;
       item.startX = item.x;
       item.startZ = item.z;
-      this.composeItem(item, item.x, item.z, 0, item.baseScale);
+      this.composeItem(item, item.x, item.z, PROP_LIFT, item.baseScale);
       this.composeShadow(item, item.x, item.z, item.radius * 1.04);
     }
   }
@@ -384,11 +386,11 @@ export class World {
       const ease = easeInCubic(t);
       const x = item.startX + (player.position.x - item.startX) * ease;
       const z = item.startZ + (player.position.z - item.startZ) * ease;
-      const y = ease * (player.currentRadius * 1.5 + player.position.y);
+      const y = PROP_LIFT + ease * (player.currentRadius * 1.5 + player.position.y);
       const scale = item.baseScale * (1 - t) * (1 - t);
       this.composeItem(item, x, z, y, scale);
       if (t >= 1) {
-        this.composeItem(item, player.position.x, 0, 0, 0);
+        this.composeItem(item, player.position.x, player.position.z, PROP_LIFT, 0);
         this.eating.splice(i, 1);
       }
     }
