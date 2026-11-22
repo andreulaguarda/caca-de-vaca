@@ -29,7 +29,7 @@ export class Intro {
   private readonly entry = new Vector3();
   private readonly cinematicPosition = new Vector3();
   private readonly cinematicTarget = new Vector3();
-  private readonly playerStart = new Vector3(-1.2, 1.9, -1.0);
+  private readonly playerStart = new Vector3(-1.55, 0.72, -1.05);
   onComplete?: () => void;
 
   constructor(
@@ -102,17 +102,34 @@ export class Intro {
         this.player.setVisible(true);
         this.player.shadow.visible = false;
         this.player.setEyeLids(0.02);
+        this.player.facePivot.visible = true;
         this.player.bodyPivot.rotation.y = 0;
+        this.player.root.position.copy(this.playerStart);
+        this.player.visual.scale.setScalar(0.08);
+        this.particles.burst(
+          this.playerStart.x,
+          0.78,
+          this.playerStart.z + 0.1,
+          [0x6b4125, 0x8d5c33, 0xf3d6a2],
+          10,
+          1.1,
+          0.06,
+          0.45
+        );
       });
-      const fall = Math.min(1, (t - 2.55) / 0.52);
+      const emerge = Math.min(1, (t - 2.55) / 0.24);
+      const fall = Math.min(1, (t - 2.79) / 0.3);
       const x = lerp(this.playerStart.x, 0, easeOutCubic(fall));
       const z = lerp(this.playerStart.z, 0, easeOutCubic(fall));
-      const y = this.playerStart.y * (1 - easeInCubic(fall));
+      const y = fall <= 0
+        ? lerp(this.playerStart.y, this.playerStart.y + 0.28, easeOutCubic(emerge))
+        : lerp(this.playerStart.y + 0.28, 0, easeInCubic(fall));
+      const pop = 0.08 + 0.92 * easeOutBack(emerge);
       this.player.root.position.set(x, Math.max(0, y), z);
-      this.player.visual.scale.set(0.88, 1.18, 0.88);
-      this.player.shadow.position.set(x, 0.019, z);
+      this.player.visual.scale.set(pop * (fall > 0.55 ? 0.9 : 1), pop * (fall > 0.55 ? 1.15 : 1), pop * (fall > 0.55 ? 0.9 : 1));
+      this.player.shadow.position.set(x, 0.055, z);
     }
-    if (t >= 3.07) {
+    if (t >= 3.08) {
       this.fire('land', true, () => {
         this.player.bodyPivot.rotation.y = 0;
         this.player.root.position.set(0, 0, 0);
@@ -129,8 +146,8 @@ export class Intro {
         this.cow.liftTail(0);
       });
     }
-    if (t > 3.1 && t < 3.55) {
-      const settle = (t - 3.1) / 0.45;
+    if (t > 3.08 && t < 3.55) {
+      const settle = (t - 3.08) / 0.47;
       const squash = easeOutBack(settle);
       this.player.visual.scale.set(
         lerp(1.32, 1, squash),
@@ -142,6 +159,13 @@ export class Intro {
       this.audio.eyeOpen();
       this.ui.showIntroCaption('¡HOLA!', 620);
     });
+    if (t > 4.78 && t < 5.45) {
+      const turn = Math.min(1, (t - 4.78) / 0.62);
+      this.player.bodyPivot.rotation.y = Math.PI * easeInOutCubic(turn);
+    }
+    if (t > 5.28) {
+      this.player.facePivot.visible = false;
+    }
     if (t > 3.95 && t < 4.35) {
       const open = Math.min(1, (t - 3.95) / 0.3);
       this.player.setEyeLids(Math.min(1, easeOutBack(open)));
