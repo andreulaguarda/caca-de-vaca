@@ -147,7 +147,7 @@ const ZONES: ZoneConfig[] = [
 
 const BIG_PROPS: PropId[] = ['tree', 'house', 'building'];
 const PROP_LIFT = 0.028;
-const SHADOW_LIFT = 0.085;
+const SHADOW_LIFT = 0.12;
 
 export class World {
   private readonly scene: Scene;

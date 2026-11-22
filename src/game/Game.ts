@@ -409,6 +409,10 @@ export class Game {
 
   private showStageBanner(index: number): void {
     const stage = STAGES[index];
+    if (index === STAGES.length - 2) {
+      this.ui.showStageBanner('OBJETIVO FINAL', stage.name, 'COME EDIFICIOS HASTA SER LEYENDA');
+      return;
+    }
     const labels = stage.unlock.map((id) => PROPS[id].label).join(' · ');
     this.ui.showStageBanner(`FASE ${index + 1}`, stage.name, labels);
   }
