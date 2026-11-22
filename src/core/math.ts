@@ -10,6 +10,13 @@ export function damp(current: number, target: number, lambda: number, dt: number
   return lerp(current, target, 1 - Math.exp(-lambda * dt));
 }
 
+export function dampAngle(current: number, target: number, lambda: number, dt: number): number {
+  let delta = target - current;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  return current + delta * (1 - Math.exp(-lambda * dt));
+}
+
 export function smoothstep(t: number): number {
   const x = clamp(t, 0, 1);
   return x * x * (3 - 2 * x);

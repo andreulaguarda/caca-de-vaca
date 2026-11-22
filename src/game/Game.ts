@@ -559,9 +559,11 @@ export class Game {
     this.particles.update(dt);
     if (this.state === 'menu' || this.state === 'records') {
       this.cow.update(Math.min(0.1, rawDt));
+      this.world.ambient(dt);
       this.cameraRig.menu(dt);
     } else if (this.state === 'intro') {
       this.intro.update(Math.min(0.25, rawDt));
+      this.world.ambient(dt);
     } else if (this.state === 'playing') {
       this.updateRun(dt, Math.min(1, rawDt));
       this.adaptQuality(dt);

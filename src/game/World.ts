@@ -12,7 +12,7 @@ import {
   Vector3
 } from 'three';
 import { PROPS, WORLD_RADIUS, isEdible, type PropId, type PropSpec } from '../config/balance';
-import { easeInCubic, mulberry32, randomRange } from '../core/math';
+import { dampAngle, easeInCubic, mulberry32, randomRange } from '../core/math';
 import { createPropGeometry } from '../models/props';
 import { propMaterial, shadowMaterial } from '../render/materials';
 import type { Player } from '../entities/Player';
@@ -47,6 +47,16 @@ export interface WorldItem {
   eatT: number;
   startX: number;
   startZ: number;
+  homeX: number;
+  homeZ: number;
+  homeYaw: number;
+  homeHeading: number;
+  motion: MotionConfig | null;
+  heading: number;
+  turnTimer: number;
+  movePhase: number;
+  speedFactor: number;
+  bob: number;
 }
 
 interface TypeGroup {
@@ -59,6 +69,29 @@ export interface InteractionResult {
   eaten: WorldItem[];
   blocker: WorldItem | null;
 }
+
+type MotionKind = 'hopper' | 'walker' | 'grazer' | 'car';
+
+interface MotionConfig {
+  kind: MotionKind;
+  speed: number;
+  leash: number;
+  hop: number;
+  yawOffset: number;
+  turnMin: number;
+  turnMax: number;
+  turnStep: number;
+}
+
+const MOTION: Partial<Record<PropId, MotionConfig>> = {
+  mouse: { kind: 'hopper', speed: 1.6, leash: 11, hop: 0.055, yawOffset: 0, turnMin: 0.55, turnMax: 1.7, turnStep: 1.8 },
+  rabbit: { kind: 'hopper', speed: 1.35, leash: 15, hop: 0.11, yawOffset: 0, turnMin: 0.7, turnMax: 2.1, turnStep: 1.5 },
+  sheep: { kind: 'grazer', speed: 0.34, leash: 17, hop: 0, yawOffset: 0, turnMin: 1.6, turnMax: 4.2, turnStep: 0.75 },
+  cow: { kind: 'grazer', speed: 0.24, leash: 22, hop: 0, yawOffset: 0, turnMin: 2.2, turnMax: 5.2, turnStep: 0.55 },
+  farmer: { kind: 'walker', speed: 0.72, leash: 24, hop: 0, yawOffset: 0, turnMin: 1.1, turnMax: 3, turnStep: 1.2 },
+  person: { kind: 'walker', speed: 0.86, leash: 26, hop: 0, yawOffset: 0, turnMin: 1, turnMax: 2.7, turnStep: 1.35 },
+  car: { kind: 'car', speed: 5.2, leash: 92, hop: 0, yawOffset: -Math.PI / 2, turnMin: 2.4, turnMax: 5.5, turnStep: 0.45 }
+};
 
 const ZONES: ZoneConfig[] = [
   {
@@ -154,6 +187,7 @@ export class World {
   private readonly groups = new Map<PropId, TypeGroup>();
   private readonly allItems: WorldItem[] = [];
   private readonly eating: WorldItem[] = [];
+  private readonly movers: WorldItem[] = [];
   private readonly shadows: InstancedMesh;
   private readonly tmpPos = new Vector3();
   private readonly tmpQuat = new Quaternion();
@@ -270,13 +304,15 @@ export class World {
       const items: WorldItem[] = [];
       for (let i = 0; i < list.length; i += 1) {
         const placement = list[i];
+        const motion = MOTION[typeId] ?? null;
+        const homeYaw = placement.yaw + (motion?.yawOffset ?? 0);
         const item: WorldItem = {
           id: this.allItems.length,
           typeId,
           spec,
           x: placement.x,
           z: placement.z,
-          yaw: placement.yaw,
+          yaw: homeYaw,
           baseScale: placement.scale,
           radius: placement.radius,
           index: i,
@@ -284,10 +320,21 @@ export class World {
           alive: true,
           eatT: -1,
           startX: placement.x,
-          startZ: placement.z
+          startZ: placement.z,
+          homeX: placement.x,
+          homeZ: placement.z,
+          homeYaw,
+          homeHeading: placement.yaw,
+          motion,
+          heading: placement.yaw,
+          turnTimer: randomRange(Math.random, 0.5, 3.5),
+          movePhase: Math.random() * Math.PI * 2,
+          speedFactor: randomRange(Math.random, 0.85, 1.16),
+          bob: 0
         };
         items.push(item);
         this.allItems.push(item);
+        if (motion) this.movers.push(item);
         const tint = new Color().setHSL(
           0.08,
           0.12,
@@ -336,8 +383,15 @@ export class World {
     for (const item of this.allItems) {
       item.alive = true;
       item.eatT = -1;
-      item.startX = item.x;
-      item.startZ = item.z;
+      item.x = item.homeX;
+      item.z = item.homeZ;
+      item.yaw = item.homeYaw;
+      item.heading = item.homeHeading;
+      item.startX = item.homeX;
+      item.startZ = item.homeZ;
+      item.turnTimer = randomRange(Math.random, 0.5, 3.5);
+      item.movePhase = Math.random() * Math.PI * 2;
+      item.bob = 0;
       this.composeItem(item, item.x, item.z, PROP_LIFT, item.baseScale);
       this.composeShadow(item, item.x, item.z, item.radius * 1.04);
     }
@@ -378,7 +432,59 @@ export class World {
     this.composeShadow(item, item.x, item.z, 0);
   }
 
+  ambient(dt: number): void {
+    this.updateMovers(dt);
+  }
+
+  private updateMovers(dt: number): void {
+    for (const item of this.movers) {
+      if (!item.alive || item.eatT >= 0 || !item.motion) continue;
+      const motion = item.motion;
+      item.turnTimer -= dt;
+      const homeDx = item.homeX - item.x;
+      const homeDz = item.homeZ - item.z;
+      const homeDistance = Math.hypot(homeDx, homeDz);
+      const worldDistance = Math.hypot(item.x, item.z);
+      if (homeDistance > motion.leash || worldDistance > WORLD_RADIUS - 4) {
+        item.heading = Math.atan2(homeDx, homeDz);
+        item.turnTimer = 1.2;
+      } else if (item.turnTimer <= 0) {
+        item.heading += randomRange(Math.random, -motion.turnStep, motion.turnStep);
+        item.turnTimer = randomRange(Math.random, motion.turnMin, motion.turnMax);
+      }
+      const speed = motion.speed * item.speedFactor;
+      const vx = Math.sin(item.heading) * speed;
+      const vz = Math.cos(item.heading) * speed;
+      const limit = WORLD_RADIUS - 4;
+      const nextX = item.x + vx * dt;
+      const nextZ = item.z + vz * dt;
+      const nextDistance = Math.hypot(nextX, nextZ);
+      if (nextDistance > limit) {
+        const scale = limit / nextDistance;
+        item.x = nextX * scale;
+        item.z = nextZ * scale;
+        item.heading = Math.atan2(-item.x, -item.z);
+      } else {
+        item.x = nextX;
+        item.z = nextZ;
+      }
+      item.yaw = dampAngle(item.yaw, item.heading + motion.yawOffset, motion.kind === 'car' ? 3 : 9, dt);
+      if (motion.kind === 'hopper') {
+        item.movePhase += dt * (5 + speed);
+        item.bob = Math.abs(Math.sin(item.movePhase)) * motion.hop;
+      } else if (motion.kind === 'walker') {
+        item.movePhase += dt * 6.2;
+        item.bob = Math.abs(Math.sin(item.movePhase)) * 0.026;
+      } else {
+        item.bob = 0;
+      }
+      this.composeItem(item, item.x, item.z, PROP_LIFT + item.bob, item.baseScale);
+      this.composeShadow(item, item.x, item.z, item.radius * 1.04);
+    }
+  }
+
   update(dt: number, player: Player): void {
+    this.updateMovers(dt);
     for (let i = this.eating.length - 1; i >= 0; i -= 1) {
       const item = this.eating[i];
       item.eatT += dt;
