@@ -233,7 +233,7 @@ export class World {
             if (BIG_PROPS.includes(typeId)) {
               let overlaps = false;
               for (const other of bigPlacements) {
-                if (Math.hypot(x - other.x, z - other.z) < (spec.radius + other.radius) * 0.72) {
+                if (Math.hypot(x - other.x, z - other.z) < (spec.radius + other.radius) * 0.9) {
                   overlaps = true;
                   break;
                 }

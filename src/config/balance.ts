@@ -2,7 +2,7 @@ export const APP_ID = 'com.mesdemil.cacadevaca';
 export const WORLD_RADIUS = 300;
 export const START_RADIUS = 0.35;
 export const FINAL_RADIUS = 34;
-export const EAT_RATIO = 0.88;
+export const EAT_RATIO = 1;
 export const PLAYER_SPEED_BASE = 3.8;
 export const PLAYER_SPEED_SIZE = 1.8;
 export const MAX_COMBO = 6;
@@ -47,8 +47,8 @@ export const PROPS: Record<PropId, PropSpec> = {
   cow: { id: 'cow', label: 'vaca', radius: 1.8, score: 320, growth: 20 },
   car: { id: 'car', label: 'coche', radius: 2.1, score: 500, growth: 12 },
   tree: { id: 'tree', label: 'árbol', radius: 3.4, score: 750, growth: 35 },
-  house: { id: 'house', label: 'casa', radius: 6.5, score: 3000, growth: 50 },
-  building: { id: 'building', label: 'edificio', radius: 12, score: 12000, growth: 70 }
+  house: { id: 'house', label: 'casa', radius: 5, score: 3000, growth: 50 },
+  building: { id: 'building', label: 'edificio', radius: 9.5, score: 12000, growth: 70 }
 };
 
 export interface StageSpec {

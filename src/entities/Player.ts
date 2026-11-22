@@ -233,9 +233,9 @@ export class Player {
 
   setRadius(radius: number): void {
     this.radius = radius;
-    this.root.scale.setScalar(radius * 1.15);
+    this.root.scale.setScalar(radius);
     this.outline.scale.setScalar(1.028);
-    const shadowScale = radius * 1.12;
+    const shadowScale = radius * 1.05;
     this.shadow.scale.set(shadowScale, shadowScale, 1);
   }
 

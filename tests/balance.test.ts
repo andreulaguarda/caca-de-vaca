@@ -18,10 +18,11 @@ describe('reglas de crecimiento', () => {
     expect(isEdible(PROPS.grass.radius, START_RADIUS)).toBe(true);
   });
 
-  it('impide comer objetos grandes o del mismo tamaño', () => {
+  it('permite comer cuando el jugador ya es igual de grande y bloquea lo mayor', () => {
     expect(isEdible(PROPS.sheep.radius, START_RADIUS)).toBe(false);
-    expect(isEdible(PROPS.house.radius, 5)).toBe(false);
-    expect(isEdible(0.89, 1)).toBe(false);
+    expect(isEdible(PROPS.house.radius, PROPS.house.radius)).toBe(true);
+    expect(isEdible(1.01, 1)).toBe(false);
+    expect(isEdible(1, 1)).toBe(true);
     expect(isEdible(0.87, 1)).toBe(true);
   });
 
