@@ -361,13 +361,12 @@ export class Player {
     this.bounceCooldown = Math.max(0, this.bounceCooldown - dt);
     this.hopSoundCooldown = Math.max(0, this.hopSoundCooldown - dt);
     const magnitude = Math.min(1, input.length());
-    this.inputSmoothed.x = damp(this.inputSmoothed.x, input.x, 14, dt);
-    this.inputSmoothed.y = damp(this.inputSmoothed.y, input.y, 14, dt);
+    this.inputSmoothed.copy(input);
     const speed = speedForRadius(this.radius);
-    const targetX = this.inputSmoothed.x * speed;
-    const targetZ = this.inputSmoothed.y * speed;
-    this.velocity.x = damp(this.velocity.x, targetX, magnitude > 0.05 ? 8.5 : 4.2, dt);
-    this.velocity.y = damp(this.velocity.y, targetZ, magnitude > 0.05 ? 8.5 : 4.2, dt);
+    const targetX = input.x * speed;
+    const targetZ = input.y * speed;
+    this.velocity.x = damp(this.velocity.x, targetX, magnitude > 0.05 ? 28 : 14, dt);
+    this.velocity.y = damp(this.velocity.y, targetZ, magnitude > 0.05 ? 28 : 14, dt);
     this.knockback.multiplyScalar(Math.exp(-5.5 * dt));
 
     this.root.position.x += (this.velocity.x + this.knockback.x) * dt;
@@ -379,7 +378,7 @@ export class Player {
       let delta = desiredFacing - this.facing;
       while (delta > Math.PI) delta -= Math.PI * 2;
       while (delta < -Math.PI) delta += Math.PI * 2;
-      this.facing += delta * Math.min(1, dt * 10);
+      this.facing += delta * Math.min(1, dt * 18);
     }
     this.bodyPivot.rotation.y = this.facing;
     const cameraDx = cameraPosition.x - this.root.position.x;
@@ -391,13 +390,13 @@ export class Player {
     this.bodyPivot.rotation.z = damp(
       this.bodyPivot.rotation.z,
       -this.inputSmoothed.x * 0.14 * magnitude,
-      8,
+      12,
       dt
     );
     this.bodyPivot.rotation.x = damp(
       this.bodyPivot.rotation.x,
       this.inputSmoothed.y * 0.12 * magnitude,
-      8,
+      12,
       dt
     );
 

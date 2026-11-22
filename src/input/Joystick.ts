@@ -83,7 +83,7 @@ export class Joystick {
     }
     const nx = dx / RADIUS;
     const ny = dy / RADIUS;
-    const dead = 0.14;
+    const dead = 0.08;
     const magnitude = Math.hypot(nx, ny);
     if (magnitude < dead) {
       this.value.set(0, 0);
