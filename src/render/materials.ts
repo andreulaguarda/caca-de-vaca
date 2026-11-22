@@ -28,15 +28,15 @@ export const propMaterial = new MeshToonMaterial({
 });
 
 export const outlineMaterial = new MeshBasicMaterial({
-  color: 0x2d2016,
+  color: 0x4a1f2f,
   side: 1
 });
 
 export const eyeWhiteMaterial = new MeshBasicMaterial({ color: 0xfffdf3 });
 export const pupilMaterial = new MeshBasicMaterial({ color: 0x24170f });
 export const eyeHighlightMaterial = new MeshBasicMaterial({ color: 0xffffff });
-export const blushMaterial = new MeshBasicMaterial({ color: 0xe98a72 });
-export const mouthMaterial = new MeshBasicMaterial({ color: 0x3a2114 });
+export const blushMaterial = new MeshBasicMaterial({ color: 0xdc6a83 });
+export const mouthMaterial = new MeshBasicMaterial({ color: 0x471f2a });
 
 export const shadowMaterial = new MeshBasicMaterial({
   color: 0x2f4a23,

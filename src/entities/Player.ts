@@ -25,32 +25,12 @@ import {
   pupilMaterial,
   shadowMaterial
 } from '../render/materials';
-import { cylinder, ico, mergeParts, part } from '../render/geometry';
+import { cylinder, mergeParts, part } from '../render/geometry';
 
 interface EyeRig {
   group: Group;
   pupil: Mesh;
   eye: Mesh;
-}
-
-function makeArm(): Mesh {
-  const geometry = mergeParts([
-    part(cylinder(0.065, 0.095, 0.52, 6), {
-      color: 0x7a4a27,
-      pos: [0, -0.25, 0]
-    }),
-    part(ico(0.145, 1), {
-      color: 0xfff8e5,
-      pos: [0, -0.53, 0.025],
-      scale: [1.08, 0.92, 0.72]
-    }),
-    part(ico(0.062, 0), {
-      color: 0xfff8e5,
-      pos: [-0.12, -0.49, 0.035],
-      scale: [1, 0.8, 0.8]
-    })
-  ]);
-  return new Mesh(geometry, propMaterial);
 }
 
 function createPoopBodyGeometry(): LatheGeometry {
@@ -94,9 +74,9 @@ function createPoopBodyGeometry(): LatheGeometry {
   geometry.computeVertexNormals();
   geometry.deleteAttribute('uv');
   const colors = new Float32Array(positions.count * 3);
-  const low = new Color(0x64391d);
-  const mid = new Color(0x85512c);
-  const high = new Color(0xad7440);
+  const low = new Color(0xc95f78);
+  const mid = new Color(0xed8ca0);
+  const high = new Color(0xffb6c3);
   const mixed = new Color();
   for (let i = 0; i < positions.count; i += 1) {
     const y = positions.getY(i);
@@ -126,8 +106,6 @@ export class Player {
   private readonly eyes: EyeRig[] = [];
   private readonly closedEyes: Mesh[] = [];
   private readonly mouth: Mesh;
-  private readonly leftArm: Mesh;
-  private readonly rightArm: Mesh;
   private readonly shadowMaterial: MeshBasicMaterial;
   private readonly velocity = new Vector2();
   private readonly knockback = new Vector2();
@@ -161,15 +139,6 @@ export class Player {
     this.outline.scale.setScalar(1.028);
     this.bodyPivot.add(this.outline);
 
-    this.leftArm = makeArm();
-    this.leftArm.position.set(-0.79, 1.08, 0.14);
-    this.leftArm.rotation.z = -0.7;
-    this.bodyPivot.add(this.leftArm);
-    this.rightArm = makeArm();
-    this.rightArm.position.set(0.79, 1.08, 0.14);
-    this.rightArm.rotation.z = 0.7;
-    this.bodyPivot.add(this.rightArm);
-
     this.facePivot.position.set(0, 1.12, 0.82);
     this.facePivot.rotation.x = -0.32;
     this.facePivot.scale.setScalar(1.05);
@@ -199,7 +168,7 @@ export class Player {
       const brow = new Mesh(
         mergeParts([
           part(cylinder(0.026, 0.033, 0.2, 5), {
-            color: 0x4a2c18,
+            color: 0x4a2232,
             pos: [0, 0, 0],
             rot: [0, 0, Math.PI / 2]
           })
@@ -227,7 +196,7 @@ export class Player {
     for (const side of [-1, 1]) {
       const line = new Mesh(
         new TorusGeometry(0.15, 0.026, 4, 10, Math.PI * 0.7),
-        new MeshBasicMaterial({ color: 0x4a2c18, side: DoubleSide })
+        new MeshBasicMaterial({ color: 0x4a2232, side: DoubleSide })
       );
       line.rotation.z = side * -0.2 + Math.PI * 0.85;
       line.position.set(side * 0.335, 0.19, 0.195);
@@ -449,12 +418,6 @@ export class Player {
     this.visual.scale.x = damp(this.visual.scale.x, squashX, 20, dt);
     this.visual.scale.y = damp(this.visual.scale.y, squashY, 20, dt);
     this.visual.scale.z = damp(this.visual.scale.z, squashZ, 20, dt);
-
-    const armWave = Math.sin(this.elapsed * (movingNow > 0.1 ? 11 : 2.2)) * 0.25;
-    this.leftArm.rotation.z = -0.7 - armWave * (0.5 + movingNow);
-    this.rightArm.rotation.z = 0.7 + armWave * (0.5 + movingNow);
-    this.leftArm.rotation.x = Math.sin(this.elapsed * 7) * 0.08;
-    this.rightArm.rotation.x = -Math.sin(this.elapsed * 7) * 0.08;
 
     this.updateBlink(dt);
     this.refreshFace(cameraPosition);
