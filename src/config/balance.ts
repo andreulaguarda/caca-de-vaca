@@ -7,7 +7,7 @@ export const PLAYER_SPEED_BASE = 3.8;
 export const PLAYER_SPEED_SIZE = 1.8;
 export const MAX_COMBO = 6;
 export const COMBO_SECONDS = 2.2;
-export const PAR_SECONDS = 420;
+export const PAR_SECONDS = 600;
 export const MAX_SPEED_BONUS = 0.5;
 
 export type PropId =
@@ -64,49 +64,49 @@ export const STAGES: StageSpec[] = [
     name: 'Cagarruta',
     zone: 'Prado',
     radius: START_RADIUS,
-    goal: 24,
+    goal: 12,
     unlock: ['grass', 'flower', 'mushroom', 'mouse', 'rabbit']
   },
   {
     name: 'Cacota',
     zone: 'Granja',
     radius: 0.8,
-    goal: 70,
+    goal: 30,
     unlock: ['sheep', 'fence']
   },
   {
     name: 'Granjera',
     zone: 'Camino',
     radius: 1.6,
-    goal: 150,
+    goal: 60,
     unlock: ['farmer', 'person']
   },
   {
     name: 'Ganadera',
     zone: 'Dehesa',
     radius: 2.8,
-    goal: 300,
+    goal: 120,
     unlock: ['cow', 'car']
   },
   {
     name: 'Maderera',
     zone: 'Arboleda',
     radius: 5.5,
-    goal: 600,
+    goal: 250,
     unlock: ['tree']
   },
   {
     name: 'Casera',
     zone: 'Pueblo',
     radius: 10,
-    goal: 1200,
+    goal: 550,
     unlock: ['house']
   },
   {
     name: 'Caca Máxima',
     zone: 'Ciudad',
     radius: 20,
-    goal: 3200,
+    goal: 2800,
     unlock: ['building']
   },
   {
