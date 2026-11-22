@@ -58,6 +58,7 @@ export class Intro {
     this.player.setVisible(false);
     this.player.shadow.visible = false;
     this.player.setEyeLids(0.02);
+    this.player.facePivot.visible = true;
     this.player.visual.position.set(0, 0, 0);
     this.player.visual.scale.set(1, 1, 1);
     this.player.visual.rotation.set(0, 0, 0);
@@ -101,7 +102,7 @@ export class Intro {
         this.player.setVisible(true);
         this.player.shadow.visible = false;
         this.player.setEyeLids(0.02);
-        this.player.bodyPivot.rotation.y = Math.PI;
+        this.player.bodyPivot.rotation.y = 0;
       });
       const fall = Math.min(1, (t - 2.55) / 0.52);
       const x = lerp(this.playerStart.x, 0, easeOutCubic(fall));
@@ -110,7 +111,6 @@ export class Intro {
       this.player.root.position.set(x, Math.max(0, y), z);
       this.player.visual.scale.set(0.88, 1.18, 0.88);
       this.player.shadow.position.set(x, 0.019, z);
-      this.player.facePivot.lookAt(this.cameraRig.camera.position);
     }
     if (t >= 3.07) {
       this.fire('land', true, () => {
@@ -214,7 +214,8 @@ export class Intro {
     this.player.visual.scale.set(1, 1, 1);
     this.player.visual.position.set(0, 0, 0);
     this.player.visual.rotation.set(0, 0, 0);
-    this.player.bodyPivot.rotation.set(0, 0, 0);
+    this.player.bodyPivot.rotation.set(0, Math.PI, 0);
+    this.player.facePivot.visible = false;
     this.player.setEyeLids(1);
     this.player.refreshFace(this.cameraRig.camera.position);
     if (skipped) {
