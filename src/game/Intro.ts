@@ -159,10 +159,6 @@ export class Intro {
       this.audio.eyeOpen();
       this.ui.showIntroCaption('¡HOLA!', 620);
     });
-    if (t > 4.78 && t < 5.45) {
-      const turn = Math.min(1, (t - 4.78) / 0.62);
-      this.player.bodyPivot.rotation.y = Math.PI * easeInOutCubic(turn);
-    }
     if (t > 5.28) {
       this.player.facePivot.visible = false;
     }
@@ -191,6 +187,20 @@ export class Intro {
     }
     this.cow.update(dt);
     this.updateCamera(t);
+    if (t >= 2.55) {
+      const dx = this.cameraRig.camera.position.x - this.player.root.position.x;
+      const dz = this.cameraRig.camera.position.z - this.player.root.position.z;
+      const lookYaw = Math.atan2(dx, dz);
+      if (t < 4.78) {
+        this.player.bodyPivot.rotation.y = lookYaw;
+      } else {
+        const turn = Math.min(1, (t - 4.78) / 0.62);
+        let delta = Math.PI - lookYaw;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        this.player.bodyPivot.rotation.y = lookYaw + delta * easeInOutCubic(turn);
+      }
+    }
     this.player.refreshFace(this.cameraRig.camera.position);
     if (t >= 5.95) {
       this.finish(false);
