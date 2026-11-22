@@ -221,7 +221,7 @@ export class World {
         const count = rawCount ?? 0;
         for (let i = 0; i < count; i += 1) {
           let placed = false;
-          for (let attempt = 0; attempt < 45 && !placed; attempt += 1) {
+          for (let attempt = 0; attempt < 120 && !placed; attempt += 1) {
             const angle = rng() * Math.PI * 2;
             const radius = Math.sqrt(
               zone.min * zone.min + rng() * (zone.max * zone.max - zone.min * zone.min)
@@ -233,7 +233,7 @@ export class World {
             if (BIG_PROPS.includes(typeId)) {
               let overlaps = false;
               for (const other of bigPlacements) {
-                if (Math.hypot(x - other.x, z - other.z) < (spec.radius + other.radius) * 0.9) {
+                if (Math.hypot(x - other.x, z - other.z) < (spec.radius + other.radius) * 1.3) {
                   overlaps = true;
                   break;
                 }
