@@ -1,13 +1,14 @@
 export const APP_ID = 'com.mesdemil.cacadevaca';
-export const GAME_SECONDS = 90;
 export const WORLD_RADIUS = 228;
 export const START_RADIUS = 0.35;
-export const FINAL_RADIUS = 24;
+export const FINAL_RADIUS = 34;
 export const EAT_RATIO = 0.88;
 export const PLAYER_SPEED_BASE = 3.8;
-export const PLAYER_SPEED_SIZE = 2.35;
+export const PLAYER_SPEED_SIZE = 1.8;
 export const MAX_COMBO = 6;
 export const COMBO_SECONDS = 2.2;
+export const PAR_SECONDS = 420;
+export const MAX_SPEED_BONUS = 0.5;
 
 export type PropId =
   | 'grass'
@@ -55,7 +56,6 @@ export interface StageSpec {
   zone: string;
   radius: number;
   goal: number;
-  timeBonus: number;
   unlock: PropId[];
 }
 
@@ -64,57 +64,57 @@ export const STAGES: StageSpec[] = [
     name: 'Cagarruta',
     zone: 'Prado',
     radius: START_RADIUS,
-    goal: 16,
-    timeBonus: 4,
+    goal: 24,
     unlock: ['grass', 'flower', 'mushroom', 'mouse', 'rabbit']
   },
   {
     name: 'Cacota',
     zone: 'Granja',
     radius: 0.8,
-    goal: 38,
-    timeBonus: 4,
+    goal: 70,
     unlock: ['sheep', 'fence']
   },
   {
     name: 'Granjera',
     zone: 'Camino',
     radius: 1.6,
-    goal: 65,
-    timeBonus: 4,
+    goal: 150,
     unlock: ['farmer', 'person']
   },
   {
     name: 'Ganadera',
     zone: 'Dehesa',
     radius: 2.8,
-    goal: 115,
-    timeBonus: 5,
+    goal: 300,
     unlock: ['cow', 'car']
   },
   {
     name: 'Maderera',
     zone: 'Arboleda',
     radius: 5.5,
-    goal: 170,
-    timeBonus: 5,
+    goal: 600,
     unlock: ['tree']
   },
   {
     name: 'Casera',
     zone: 'Pueblo',
     radius: 10,
-    goal: 280,
-    timeBonus: 5,
+    goal: 1200,
     unlock: ['house']
   },
   {
     name: 'Caca Máxima',
     zone: 'Ciudad',
     radius: 20,
-    goal: 650,
-    timeBonus: 0,
+    goal: 3200,
     unlock: ['building']
+  },
+  {
+    name: 'La caca más grande de todos los tiempos',
+    zone: 'Leyenda',
+    radius: FINAL_RADIUS,
+    goal: 0,
+    unlock: []
   }
 ];
 
@@ -133,10 +133,12 @@ export function speedForRadius(radius: number): number {
   return PLAYER_SPEED_BASE + radius * PLAYER_SPEED_SIZE;
 }
 
-export function timeBonusFor(stageIndex: number): number {
-  return STAGES[Math.min(STAGES.length - 1, Math.max(0, stageIndex))].timeBonus;
-}
-
 export function scoreFor(prop: PropSpec, multiplier: number): number {
   return Math.round(prop.score * multiplier);
+}
+
+export function speedBonusFor(baseScore: number, elapsedSeconds: number): number {
+  const elapsed = Math.max(1, elapsedSeconds);
+  const rate = Math.max(0, Math.min(MAX_SPEED_BONUS, (PAR_SECONDS - elapsed) / elapsed));
+  return Math.round(baseScore * rate);
 }

@@ -38,14 +38,11 @@
               <rect x="14" y="5" width="4" height="14" rx="2"></rect>
             </svg>
           </button>
-          <div class="hud-timer" id="hud-timer">
-            <span class="hud-caption">TIEMPO</span>
-            <strong id="hud-time">1:30</strong>
-          </div>
           <div class="hud-score">
             <span class="hud-caption">PUNTOS</span>
             <strong id="hud-score">0</strong>
           </div>
+          <div class="hud-spacer" aria-hidden="true"></div>
           <div class="hud-combo hidden" id="hud-combo">x2</div>
         </div>
         <div class="hud-stage">
@@ -71,7 +68,7 @@
               <span class="logo-main">CACA</span>
               <span class="logo-sub">DE VACA</span>
             </div>
-            <p class="tagline">Come, crece y cómete hasta la última casa.</p>
+            <p class="tagline">Come, crece y sé la caca más grande de todos los tiempos.</p>
           </div>
           <div class="menu-bottom">
             <div class="best-pill">
@@ -99,7 +96,7 @@
                 </svg>
               </button>
             </div>
-            <p class="control-note">Joystick libre · salto automático · 90 segundos</p>
+            <p class="control-note">Joystick libre · salto automático · sin límite</p>
           </div>
         </div>
       </section>
@@ -147,17 +144,18 @@
           <div class="results-grid">
             <div>
               <span>FASE</span>
-              <strong id="results-stage">Cagarruta</strong>
+              <strong id="results-stage">Leyenda</strong>
             </div>
             <div>
-              <span>RÉCORD</span>
-              <strong id="results-best">0</strong>
+              <span>TIEMPO</span>
+              <strong id="results-time">0:00</strong>
             </div>
             <div>
-              <span>BONUS</span>
-              <strong id="results-bonus">0</strong>
+              <span>BONUS VELOCIDAD</span>
+              <strong id="results-bonus">+0</strong>
             </div>
           </div>
+          <p class="results-best-line" id="results-best">RÉCORD 0</p>
           <button class="btn btn-play" id="btn-retry">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 5.5v13l10-6.5-10-6.5z"></path>

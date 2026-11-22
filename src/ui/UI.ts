@@ -15,7 +15,6 @@ export interface UIActions {
 }
 
 export interface HudState {
-  timeLeft: number;
   score: number;
   stageName: string;
   zone: string;
@@ -31,6 +30,7 @@ export interface ResultsView {
   won: boolean;
   isBest: boolean;
   bestScore: number;
+  timeSeconds: number;
 }
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -48,8 +48,6 @@ export class UI {
   private readonly resultsScreen = byId('screen-results');
   private readonly hud = byId('hud');
   private readonly boot = byId('boot');
-  private readonly timer = byId('hud-time');
-  private readonly timerBox = byId('hud-timer');
   private readonly score = byId('hud-score');
   private readonly stage = byId('hud-stage');
   private readonly zone = byId('hud-zone');
@@ -73,6 +71,7 @@ export class UI {
   private readonly resultsStage = byId('results-stage');
   private readonly resultsBest = byId('results-best');
   private readonly resultsBonus = byId('results-bonus');
+  private readonly resultsTime = byId('results-time');
   private readonly pauseSoundLabel = document.querySelector<HTMLElement>('.pause-sound-label');
   private readonly soundButtons = Array.from(document.querySelectorAll<HTMLElement>('.sound-btn'));
   private readonly orientation = byId('orientation');
@@ -170,11 +169,12 @@ export class UI {
       const dateText = Number.isNaN(date.getTime())
         ? ''
         : date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-      meta.textContent = `Fase ${record.stage + 1} · ${record.stageName}${dateText ? ` · ${dateText}` : ''}`;
+      const timeText = record.timeSeconds !== undefined ? ` · ${formatTime(record.timeSeconds)}` : '';
+      meta.textContent = `Fase ${record.stage + 1} · ${record.stageName}${timeText}${dateText ? ` · ${dateText}` : ''}`;
       info.append(points, meta);
       const badge = document.createElement('span');
       badge.className = 'record-badge';
-      badge.textContent = record.won ? 'CACA MÁXIMA' : record.stage >= 3 ? 'CRECIDA' : 'BOING';
+      badge.textContent = record.won ? 'LEYENDA' : record.stage >= 3 ? 'CRECIDA' : 'BOING';
       row.append(place, info, badge);
       this.recordsList.append(row);
     });
@@ -184,11 +184,15 @@ export class UI {
     this.hideAllScreens();
     this.resultsScreen.classList.remove('hidden');
     this.hud.classList.add('hidden');
-    this.resultsTitle.textContent = view.won ? '¡CACA MÁXIMA!' : '¡TIEMPO!';
-    this.resultsKicker.textContent = view.won ? 'TE HAS COMIDO EL MUNDO' : 'SE ACABÓ EL BOING';
+    this.resultsTitle.textContent = view.won
+      ? '¡LA CACA MÁS GRANDE DE TODOS LOS TIEMPOS!'
+      : '¡TIEMPO!';
+    this.resultsTitle.classList.toggle('legend', view.won);
+    this.resultsKicker.textContent = view.won ? 'OBJETIVO CONSEGUIDO' : 'SE ACABÓ EL BOING';
     this.resultsRecord.classList.toggle('hidden', !view.isBest);
-    this.resultsStage.textContent = view.stageName;
-    this.resultsBest.textContent = formatScore(view.bestScore);
+    this.resultsStage.textContent = view.won ? 'Leyenda' : view.stageName;
+    this.resultsBest.textContent = `RÉCORD ${formatScore(view.bestScore)}`;
+    this.resultsTime.textContent = formatTime(view.timeSeconds);
     this.resultsBonus.textContent = `+${formatScore(view.bonus)}`;
     this.animateNumber(this.resultsScore, view.score);
   }
@@ -204,19 +208,16 @@ export class UI {
   }
 
   updateHud(state: HudState): void {
-    const time = formatTime(state.timeLeft);
     const points = formatScore(state.score);
     const progress = Math.round(Math.max(0, Math.min(1, state.progress)) * 100);
     const comboVisible = state.combo >= 2;
-    const key = `${time}|${points}|${state.stageName}|${state.zone}|${progress}|${comboVisible ? state.combo : 0}`;
+    const key = `${points}|${state.stageName}|${state.zone}|${progress}|${comboVisible ? state.combo : 0}`;
     if (key === this.lastHud) return;
     this.lastHud = key;
-    this.timer.textContent = time;
     this.score.textContent = points;
     this.stage.textContent = state.stageName;
     this.zone.textContent = state.zone;
     this.progress.style.width = `${progress}%`;
-    this.timerBox.classList.toggle('warning', state.timeLeft <= 10 && state.timeLeft > 0);
     this.combo.classList.toggle('hidden', !comboVisible);
     if (comboVisible) this.combo.textContent = `x${state.combo} COMBO`;
   }

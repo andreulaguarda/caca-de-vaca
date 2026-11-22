@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PAR_SECONDS,
   PROPS,
   STAGES,
   START_RADIUS,
   isEdible,
   playerRadiusFor,
   scoreFor,
+  speedBonusFor,
   speedForRadius
 } from '../src/config/balance';
 
@@ -36,12 +38,20 @@ describe('reglas de crecimiento', () => {
   });
 
   it('las fases ordenan los tamaños de los alimentos', () => {
-    expect(STAGES.length).toBeGreaterThanOrEqual(7);
+    expect(STAGES.length).toBeGreaterThanOrEqual(8);
     const last = PROPS.building.radius;
     expect(playerRadiusFor(STAGES.length - 1, 1)).toBeGreaterThan(last);
   });
 
   it('el multiplicador de combo aumenta la puntuación', () => {
     expect(scoreFor(PROPS.cow, 3)).toBe(PROPS.cow.score * 3);
+  });
+
+  it('terminar antes aumenta la puntuación final', () => {
+    const fast = speedBonusFor(10000, PAR_SECONDS * 0.5);
+    const slow = speedBonusFor(10000, PAR_SECONDS);
+    expect(fast).toBeGreaterThan(slow);
+    expect(slow).toBe(0);
+    expect(fast).toBeLessThanOrEqual(5000);
   });
 });

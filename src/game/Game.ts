@@ -7,7 +7,6 @@ import {
 } from 'three';
 import {
   COMBO_SECONDS,
-  GAME_SECONDS,
   MAX_COMBO,
   PROPS,
   STAGES,
@@ -15,6 +14,7 @@ import {
   WORLD_RADIUS,
   playerRadiusFor,
   scoreFor,
+  speedBonusFor,
   type PropId
 } from '../config/balance';
 import { clamp } from '../core/math';
@@ -69,10 +69,9 @@ export class Game {
   private score = 0;
   private stageIndex = 0;
   private growth = 0;
-  private timeLeft = GAME_SECONDS;
+  private elapsedSeconds = 0;
   private comboCount = 0;
   private comboTimer = 0;
-  private lastWholeSecond = GAME_SECONDS;
   private lastFrame = 0;
   private tutorialTimer = 0;
   private eatSoundAt = 0;
@@ -183,10 +182,9 @@ export class Game {
     this.score = 0;
     this.stageIndex = 0;
     this.growth = 0;
-    this.timeLeft = GAME_SECONDS;
+    this.elapsedSeconds = 0;
     this.comboCount = 0;
     this.comboTimer = 0;
-    this.lastWholeSecond = GAME_SECONDS;
     this.eatSoundAt = 0;
     this.player.setRadius(START_RADIUS);
   }
@@ -325,27 +323,30 @@ export class Game {
     this.player.setFrozen(true);
     this.audio.stopMusic();
     const stage = STAGES[this.stageIndex];
-    const bonus = won ? Math.round(this.timeLeft * 20) : 0;
-    this.score += bonus;
+    const speedBonus = won ? speedBonusFor(this.score, this.elapsedSeconds) : 0;
+    this.score += speedBonus;
     const bestBefore = storage.getBest();
     const record = {
       score: this.score,
       stage: this.stageIndex,
       stageName: stage.name,
       won,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      timeSeconds: this.elapsedSeconds,
+      speedBonus
     };
     const result = storage.addRecord(record);
     const completedRuns = storage.addPlay();
     const bestScore = Math.max(bestBefore?.score ?? 0, record.score);
     this.ui.showResults({
       score: record.score,
-      bonus,
+      bonus: speedBonus,
       stageName: stage.name,
       stageIndex: this.stageIndex,
       won,
       isBest: result.isBest,
-      bestScore
+      bestScore,
+      timeSeconds: this.elapsedSeconds
     });
     void ads.showBanner();
     if (won) {
@@ -373,21 +374,16 @@ export class Game {
   private applyGrowth(amount: number): void {
     this.growth += amount;
     const lastIndex = STAGES.length - 1;
-    if (this.stageIndex >= lastIndex) {
-      if (this.growth >= STAGES[lastIndex].goal) {
-        this.growth = STAGES[lastIndex].goal;
-        this.syncRadius();
-        this.endRun(true);
-      } else {
-        this.syncRadius();
-      }
-      return;
-    }
     while (this.stageIndex < lastIndex && this.growth >= STAGES[this.stageIndex].goal) {
       const finished = this.stageIndex;
       this.growth -= STAGES[finished].goal;
       this.stageIndex += 1;
-      this.timeLeft += STAGES[finished].timeBonus;
+      if (this.stageIndex >= lastIndex) {
+        this.growth = 0;
+        this.syncRadius();
+        this.endRun(true);
+        return;
+      }
       this.audio.stageUp();
       this.cameraRig.pulseZoom(3 + this.player.currentRadius * 0.6);
       this.showStageBanner(this.stageIndex);
@@ -401,20 +397,13 @@ export class Game {
         0.08 + this.player.currentRadius * 0.03,
         0.8
       );
-      this.ui.showToast(`+${STAGES[finished].timeBonus} s`);
-    }
-    if (this.stageIndex === lastIndex && this.growth >= STAGES[lastIndex].goal) {
-      this.growth = STAGES[lastIndex].goal;
-      this.syncRadius();
-      this.endRun(true);
-      return;
     }
     this.syncRadius();
   }
 
   private syncRadius(): void {
     const stage = STAGES[this.stageIndex];
-    const progress = clamp(this.growth / stage.goal, 0, 1);
+    const progress = stage.goal > 0 ? clamp(this.growth / stage.goal, 0, 1) : 1;
     this.player.setRadius(playerRadiusFor(this.stageIndex, progress));
   }
 
@@ -497,7 +486,8 @@ export class Game {
     }
   }
 
-  private updateRun(dt: number): void {
+  private updateRun(dt: number, rawDt: number): void {
+    this.elapsedSeconds += rawDt;
     this.player.setRadius(
       playerRadiusFor(
         this.stageIndex,
@@ -532,26 +522,12 @@ export class Game {
     }
     this.world.update(dt, this.player);
     this.cameraRig.follow(dt, this.player);
-    this.timeLeft -= dt;
-    if (this.timeLeft <= 10 && this.timeLeft > 0) {
-      const whole = Math.ceil(this.timeLeft);
-      if (whole < this.lastWholeSecond) {
-        this.lastWholeSecond = whole;
-        this.audio.countdown(whole <= 3);
-      }
-    }
-    if (this.timeLeft <= 0) {
-      this.timeLeft = 0;
-      this.endRun(false);
-      return;
-    }
     this.updateHud();
   }
 
   private updateHud(): void {
     const stage = STAGES[this.stageIndex];
     this.ui.updateHud({
-      timeLeft: this.timeLeft,
       score: this.score,
       stageName: stage.name,
       zone: stage.zone,
@@ -588,7 +564,7 @@ export class Game {
     } else if (this.state === 'intro') {
       this.intro.update(Math.min(0.25, rawDt));
     } else if (this.state === 'playing') {
-      this.updateRun(dt);
+      this.updateRun(dt, Math.min(1, rawDt));
       this.adaptQuality(dt);
     }
     const focus = this.state === 'menu' || this.state === 'records' ? ORIGIN : this.player.position;

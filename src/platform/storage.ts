@@ -6,6 +6,8 @@ export interface GameRecord {
   stageName: string;
   won: boolean;
   date: string;
+  timeSeconds?: number;
+  speedBonus?: number;
 }
 
 interface SaveData {

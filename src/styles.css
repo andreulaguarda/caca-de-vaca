@@ -139,7 +139,7 @@ button {
 .hud-top {
   position: relative;
   display: grid;
-  grid-template-columns: 46px 1fr auto;
+  grid-template-columns: 46px 1fr 46px;
   align-items: start;
   gap: 8px;
 }
@@ -182,57 +182,41 @@ button {
   height: 20px;
 }
 
-.hud-timer,
 .hud-score {
   min-height: 46px;
+  min-width: 128px;
+  justify-self: center;
+  align-items: center;
   border: 3px solid var(--brown);
   border-radius: 15px;
-  background: rgba(255, 245, 216, 0.94);
+  background: linear-gradient(180deg, #fff9e8, #ffe9af);
   box-shadow: 0 4px 0 rgba(64, 39, 19, 0.36);
-  padding: 3px 12px 4px;
+  padding: 3px 16px 4px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   line-height: 1;
 }
 
-.hud-timer {
-  justify-self: center;
-  align-items: center;
-  min-width: 92px;
-  background: linear-gradient(180deg, #fff9e8, #ffe9af);
-}
-
-.hud-score {
-  align-items: flex-end;
-  min-width: 84px;
+.hud-spacer {
+  width: 46px;
+  min-height: 1px;
 }
 
 .hud-caption {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.14em;
   opacity: 0.62;
   margin-bottom: 3px;
 }
 
-.hud-timer strong {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 .hud-score strong {
-  font-size: 17px;
+  font-size: 23px;
   font-weight: 700;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.hud-timer.warning {
-  background: linear-gradient(180deg, #ffddcc, #ff9f86);
-  animation: timerPulse 0.6s ease-in-out infinite alternate;
 }
 
 .hud-combo {
@@ -811,9 +795,9 @@ button {
 
 .results-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 0.8fr;
+  grid-template-columns: 0.9fr 0.8fr 1.25fr;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .results-grid > div {
@@ -839,6 +823,24 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.results-grid > div:nth-child(3) span {
+  font-size: 7px;
+}
+
+.results-title.legend {
+  font-size: clamp(25px, 7.8vw, 36px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+.results-best-line {
+  margin: 0 0 12px;
+  color: var(--brown-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 .results-card .btn-play {
@@ -1170,15 +1172,6 @@ html.native #web-ad {
   cursor: default;
 }
 
-@keyframes timerPulse {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.045);
-  }
-}
-
 @keyframes comboPop {
   0% {
     transform: translateX(-50%) rotate(-3deg) scale(0.7);
@@ -1282,11 +1275,11 @@ html.native #web-ad {
   .hud-caption {
     font-size: 7px;
   }
-  .hud-timer strong {
-    font-size: 19px;
+  .hud-score {
+    min-width: 112px;
   }
   .hud-score strong {
-    font-size: 15px;
+    font-size: 20px;
   }
   .tagline {
     font-size: 13px;
