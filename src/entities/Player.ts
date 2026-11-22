@@ -375,9 +375,9 @@ export class Player {
     let squashY = 1;
     let squashZ = 1;
     if (movingNow > 0.12) {
-      const hopDuration = clamp(0.52 - this.radius * 0.012, 0.32, 0.52);
+      const hopDuration = 0.48;
       const previous = this.hopClock;
-      this.hopClock += dt * (0.75 + movingNow * 0.35);
+      this.hopClock += dt;
       if (this.hopClock >= hopDuration) {
         this.hopClock %= hopDuration;
         if (this.onHop && this.hopSoundCooldown <= 0) {
