@@ -63,7 +63,7 @@ export interface InteractionResult {
 const ZONES: ZoneConfig[] = [
   {
     min: 2.8,
-    max: 22,
+    max: 28,
     counts: {
       grass: 180,
       flower: 75,
@@ -75,72 +75,72 @@ const ZONES: ZoneConfig[] = [
   },
   {
     min: 0,
-    max: 36,
+    max: 44,
     counts: {
-      grass: 145,
+      grass: 150,
       flower: 65,
-      mushroom: 48,
-      mouse: 35,
+      mushroom: 45,
+      mouse: 32,
       rabbit: 24,
-      fence: 8,
-      sheep: 6
+      fence: 10,
+      sheep: 8
     }
   },
   {
-    min: 31,
-    max: 86,
+    min: 36,
+    max: 112,
     counts: {
       grass: 170,
-      flower: 50,
-      mushroom: 36,
-      mouse: 24,
-      rabbit: 18,
-      sheep: 32,
-      fence: 56,
-      farmer: 17,
-      cow: 19,
-      car: 7,
-      tree: 23,
-      house: 2,
-      person: 4
+      flower: 45,
+      mushroom: 28,
+      mouse: 18,
+      rabbit: 12,
+      sheep: 30,
+      fence: 55,
+      farmer: 30,
+      person: 20,
+      cow: 20,
+      car: 10,
+      tree: 22,
+      house: 3
     }
   },
   {
-    min: 78,
-    max: 156,
+    min: 104,
+    max: 205,
     counts: {
-      grass: 100,
+      grass: 110,
       flower: 30,
-      mushroom: 18,
+      mushroom: 15,
       mouse: 10,
       rabbit: 8,
       sheep: 6,
-      fence: 22,
-      farmer: 9,
-      person: 28,
-      cow: 9,
-      car: 20,
-      tree: 32,
-      house: 25,
-      building: 2
+      fence: 20,
+      farmer: 18,
+      person: 70,
+      cow: 8,
+      car: 25,
+      tree: 30,
+      house: 35,
+      building: 8
     }
   },
   {
-    min: 146,
-    max: WORLD_RADIUS,
+    min: 195,
+    max: 298,
     counts: {
-      grass: 26,
+      grass: 25,
       flower: 8,
-      mushroom: 5,
-      mouse: 4,
-      rabbit: 3,
-      person: 24,
-      farmer: 4,
-      cow: 3,
-      car: 26,
-      tree: 20,
-      house: 36,
-      building: 26
+      mushroom: 4,
+      mouse: 3,
+      rabbit: 2,
+      farmer: 12,
+      person: 130,
+      cow: 2,
+      car: 40,
+      tree: 25,
+      house: 55,
+      building: 70
     }
   }
 ];
@@ -185,7 +185,7 @@ export class World {
         const count = rawCount ?? 0;
         for (let i = 0; i < count; i += 1) {
           let placed = false;
-          for (let attempt = 0; attempt < 25 && !placed; attempt += 1) {
+          for (let attempt = 0; attempt < 45 && !placed; attempt += 1) {
             const angle = rng() * Math.PI * 2;
             const radius = Math.sqrt(
               zone.min * zone.min + rng() * (zone.max * zone.max - zone.min * zone.min)
@@ -219,6 +219,32 @@ export class World {
             placed = true;
           }
         }
+      }
+    }
+    for (let group = 0; group < 16; group += 1) {
+      const city = group >= 8;
+      const groupAngle = rng() * Math.PI * 2;
+      const min = city ? 205 : 118;
+      const max = city ? 285 : 192;
+      const groupRadius = Math.sqrt(min * min + rng() * (max * max - min * min));
+      const centerX = Math.cos(groupAngle) * groupRadius;
+      const centerZ = Math.sin(groupAngle) * groupRadius;
+      const crowdSize = 8 + Math.floor(rng() * 7);
+      for (let person = 0; person < crowdSize; person += 1) {
+        const angle = rng() * Math.PI * 2;
+        const spread = Math.sqrt(rng()) * 12;
+        const x = centerX + Math.cos(angle) * spread;
+        const z = centerZ + Math.sin(angle) * spread;
+        if (Math.hypot(x, z) > WORLD_RADIUS - 4) continue;
+        const scale = randomRange(rng, 0.9, 1.1);
+        result.push({
+          typeId: 'person',
+          x,
+          z,
+          yaw: rng() * Math.PI * 2,
+          scale,
+          radius: PROPS.person.radius * scale
+        });
       }
     }
     return result;

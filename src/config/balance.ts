@@ -1,5 +1,5 @@
 export const APP_ID = 'com.mesdemil.cacadevaca';
-export const WORLD_RADIUS = 228;
+export const WORLD_RADIUS = 300;
 export const START_RADIUS = 0.35;
 export const FINAL_RADIUS = 34;
 export const EAT_RATIO = 0.88;
@@ -42,13 +42,13 @@ export const PROPS: Record<PropId, PropSpec> = {
   rabbit: { id: 'rabbit', label: 'conejo', radius: 0.28, score: 35, growth: 2.2 },
   sheep: { id: 'sheep', label: 'oveja', radius: 0.6, score: 80, growth: 6 },
   fence: { id: 'fence', label: 'valla', radius: 0.5, score: 60, growth: 4.5 },
-  farmer: { id: 'farmer', label: 'granjero', radius: 1.0, score: 150, growth: 10 },
-  person: { id: 'person', label: 'persona', radius: 1.1, score: 170, growth: 11 },
+  farmer: { id: 'farmer', label: 'granjero', radius: 1.0, score: 650, growth: 5 },
+  person: { id: 'person', label: 'persona', radius: 1.1, score: 800, growth: 6 },
   cow: { id: 'cow', label: 'vaca', radius: 1.8, score: 320, growth: 20 },
-  car: { id: 'car', label: 'coche', radius: 2.1, score: 400, growth: 24 },
-  tree: { id: 'tree', label: 'árbol', radius: 3.4, score: 750, growth: 45 },
-  house: { id: 'house', label: 'casa', radius: 6.5, score: 1600, growth: 90 },
-  building: { id: 'building', label: 'edificio', radius: 12, score: 4000, growth: 180 }
+  car: { id: 'car', label: 'coche', radius: 2.1, score: 500, growth: 12 },
+  tree: { id: 'tree', label: 'árbol', radius: 3.4, score: 750, growth: 35 },
+  house: { id: 'house', label: 'casa', radius: 6.5, score: 3000, growth: 50 },
+  building: { id: 'building', label: 'edificio', radius: 12, score: 12000, growth: 70 }
 };
 
 export interface StageSpec {

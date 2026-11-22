@@ -174,8 +174,8 @@ export class Environment {
   }
 
   setFogForCamera(distance: number): void {
-    this.fog.near = clamp(distance * 1.4, 50, 520);
-    this.fog.far = clamp(distance * 7.5, 170, 1800);
+    this.fog.near = clamp(distance * 1.6, 50, 1600);
+    this.fog.far = clamp(distance * 6.5, 180, 2300);
   }
 
   update(dt: number): void {

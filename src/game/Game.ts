@@ -488,12 +488,7 @@ export class Game {
 
   private updateRun(dt: number, rawDt: number): void {
     this.elapsedSeconds += rawDt;
-    this.player.setRadius(
-      playerRadiusFor(
-        this.stageIndex,
-        clamp(this.growth / STAGES[this.stageIndex].goal, 0, 1)
-      )
-    );
+    this.syncRadius();
     this.player.update(dt, this.joystick.vector, this.cameraRig.camera.position);
     const maxRadius = WORLD_RADIUS - Math.min(20, this.player.currentRadius * 0.8) - 2;
     const distance = Math.hypot(this.player.position.x, this.player.position.z);
