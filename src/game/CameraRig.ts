@@ -94,7 +94,7 @@ export class CameraRig {
       player.position.y + radius * 1.05,
       player.position.z
     );
-    const followRate = radius > 8 ? 7.5 : 11;
+    const followRate = radius > 8 ? 8 : 12;
     this.focus.x = damp(this.focus.x, this.desiredFocus.x, followRate, dt);
     this.focus.y = damp(this.focus.y, this.desiredFocus.y, followRate, dt);
     this.focus.z = damp(this.focus.z, this.desiredFocus.z, followRate, dt);

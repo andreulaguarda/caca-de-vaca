@@ -365,8 +365,8 @@ export class Player {
     const speed = speedForRadius(this.radius);
     const targetX = input.x * speed;
     const targetZ = input.y * speed;
-    this.velocity.x = damp(this.velocity.x, targetX, magnitude > 0.05 ? 28 : 14, dt);
-    this.velocity.y = damp(this.velocity.y, targetZ, magnitude > 0.05 ? 28 : 14, dt);
+    this.velocity.x = damp(this.velocity.x, targetX, magnitude > 0.05 ? 36 : 18, dt);
+    this.velocity.y = damp(this.velocity.y, targetZ, magnitude > 0.05 ? 36 : 18, dt);
     this.knockback.multiplyScalar(Math.exp(-5.5 * dt));
 
     this.root.position.x += (this.velocity.x + this.knockback.x) * dt;
